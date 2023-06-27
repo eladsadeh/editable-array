@@ -1,7 +1,10 @@
 
+import { useState } from 'react'
 import { EditableText } from './components/EditableText'
 
-function App() {
+function EditableArray() {
+
+
   return (
     <div className="App">
       <h1>Controlled contenteditable element for React</h1>
@@ -10,4 +13,4 @@ function App() {
   )
 }
 
-export default App
+export default EditableArray
