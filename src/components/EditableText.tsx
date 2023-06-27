@@ -19,7 +19,7 @@ export const EditableText = ({value = '', setValue}: Props) => {
     !isDisabled && placeCaretAt(caretLocation.current);
   }, [value, isDisabled]);
 
-  if (isDisabled) return (<span className="editable-text">{value}</span>)
+  if (isDisabled) return (<span className="not-editable text">{value}</span>)
 
   function placeCaretAt(location: number) {
     const el = textElement.current;
@@ -86,7 +86,7 @@ export const EditableText = ({value = '', setValue}: Props) => {
   return (
     <span
         ref={textElement}
-        className="editable-text" 
+        className="editable text" 
         contentEditable={'plaintext-only' as ContentEditable} // Use plaintext (not supporting HTML) 
         onKeyUp={(ev) => handelKeys(ev)}
         onKeyDown={(ev) => handelKeys(ev)}

@@ -45,7 +45,7 @@ button {
   transition: border-color 0.25s;
 }
 
-.editable-text {
+.text {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -54,7 +54,14 @@ button {
   padding: 10px 20px;
   background-color: #e8e3e3;
   border-radius: 8px;
+}
+
+.editable {
   color: black;
+}
+
+.not-editable {
+  color: gray;
 }
 
 @media (prefers-color-scheme: light) {
