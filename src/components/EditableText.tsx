@@ -1,21 +1,25 @@
-import { useState, useRef, useEffect} from 'react'
+import { useRef, useEffect} from 'react'
 
 // Workaround: React does not support 'plaintext-only' as a value for contentEditable
 type ContentEditable = 'inherit' | boolean | undefined;
 
 interface Props {
-  placeholder?: string;
+  value?: string;
+  setValue?: (text: string) => void;
 }
 
-export const EditableText = ({placeholder}: Props) => {
+export const EditableText = ({value = '', setValue}: Props) => {
 
-  const [text, setText] = useState(placeholder || "This is editable text");
+  const isDisabled = !setValue;
+  // const [text, setText] = useState(placeholder || "This is editable text");
   const caretLocation = useRef(0);
   const textElement = useRef<HTMLSpanElement>(null);
-
+  
   useEffect(() => {
-    placeCaretAt(caretLocation.current);
-  }, [text]);
+    !isDisabled && placeCaretAt(caretLocation.current);
+  }, [value, isDisabled]);
+
+  if (isDisabled) return (<span className="editable-text">{value}</span>)
 
   function placeCaretAt(location: number) {
     const el = textElement.current;
@@ -56,7 +60,7 @@ export const EditableText = ({placeholder}: Props) => {
     }
 
     const nodeText = el.innerHTML || '';
-    setText(nodeText);
+    setValue && setValue(nodeText);
   }
 
 
@@ -72,7 +76,8 @@ export const EditableText = ({placeholder}: Props) => {
       const sel = window.getSelection();
       if (sel) caretLocation.current = sel.anchorOffset;
     } else if (ev.metaKey && ev.key === "z") {
-      ev.preventDefault();
+      // TODO: Undo/Redo functionality
+      ev.preventDefault(); // Prevent browser undo/redo
       if (ev.shiftKey) console.log("REDO")
       else console.log("UNDO")
     }
@@ -80,7 +85,6 @@ export const EditableText = ({placeholder}: Props) => {
   
   return (
     <span
-        id="text"
         ref={textElement}
         className="editable-text" 
         contentEditable={'plaintext-only' as ContentEditable} // Use plaintext (not supporting HTML) 
@@ -88,7 +92,7 @@ export const EditableText = ({placeholder}: Props) => {
         onKeyDown={(ev) => handelKeys(ev)}
         onClick={() => handleClick()}
         onInput={(ev: React.SyntheticEvent<HTMLSpanElement, InputEvent>) => handleChange(ev)}
-        dangerouslySetInnerHTML={{ __html: text }}
+        dangerouslySetInnerHTML={{ __html: value }}
         suppressContentEditableWarning={true}
       >
       </span>
