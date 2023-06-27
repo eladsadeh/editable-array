@@ -12,6 +12,9 @@ export const EditableText = ({placeholder}: Props) => {
   const [text, setText] = useState(placeholder || "This is editable text");
   const caretLocation = useRef(0);
   const textElement = useRef<HTMLSpanElement>(null);
+  const historyStack = useRef<string[]>([]);
+  const historyIndex = useRef(0);
+  const changeCount = useRef(0);
 
   useEffect(() => {
     placeCaretAt(caretLocation.current);
@@ -19,37 +22,47 @@ export const EditableText = ({placeholder}: Props) => {
 
   function placeCaretAt(location: number) {
     const el = textElement.current;
+    if (!el) {
+      console.error("Error: No element")
+      return
+    }
+    // Add empty text node if none exists
+    if (!el.childNodes.length) el.appendChild(document.createTextNode(''));
     const sel = window.getSelection();
-    // console.log("UseEffect:", caretLocation.current, text, sel, el);
-    if (el && sel) {
+    if (sel) {
       const range = document.createRange();
-      range.setStart(el.childNodes[0],location);
+      try {
+        range.setStart(el.childNodes[0], location);
+      } catch (e) {
+        range.setStart(el.childNodes[0],(el.childNodes[0] as Text)?.wholeText.length || 0);
+        console.warn("Warning: caret location outside of text node")
+      }
       sel.removeAllRanges();
       sel.addRange(range);
     }
   }
 
+
   function handleChange(ev: React.SyntheticEvent<HTMLSpanElement, InputEvent>) {
     ev.preventDefault();
-    // Line break creates multiple text nodes
-    // join them into one string to preserve one text node
-    if (ev.nativeEvent.inputType === "insertLineBreak") {
-      // console.log("insertLineBreak", window.getSelection()?.anchorNode, ev.nativeEvent, textElement.current?.childNodes);
-      if (textElement.current?.childNodes) {
-        const nodes = Array.from(textElement.current.childNodes);
-        const text = nodes.reduce((t, node) => t += node.nodeValue || '', '');
-        caretLocation.current += 1;
-        setText(text);
-      }
-      return false;
-    }
-      
-    const sel = window.getSelection();
+    changeCount.current += 1;
     const el = textElement.current;
-    if (sel) caretLocation.current = sel.anchorOffset;
+    if (!el) {
+      console.error("Error: No element")
+      return
+    }
 
-    el && setText((el.innerHTML));
+    if (ev.nativeEvent.inputType === "insertLineBreak") {
+      caretLocation.current += 1;
+    } else {
+      const sel = window.getSelection();
+      if (sel) caretLocation.current = sel.anchorOffset;
+    }
+
+    const nodeText = el.innerHTML || '';
+    setText(nodeText);
   }
+
 
   function handleClick() {
     // Set caret location when clicking on text
@@ -57,11 +70,15 @@ export const EditableText = ({placeholder}: Props) => {
     caretLocation.current = sel?.anchorOffset || 0;
   }
 
-  function handelKeys(key: string) {
-    // Move caret when using arrow keys
-    if (/^Arrow/.test(key)) {
+  function handelKeys(ev: React.KeyboardEvent<HTMLSpanElement>) {
+    if (/^Arrow/.test(ev.key)) {
+      // Move caret when using arrow keys
       const sel = window.getSelection();
       if (sel) caretLocation.current = sel.anchorOffset;
+    } else if (ev.metaKey && ev.key === "z") {
+      ev.preventDefault();
+      if (ev.shiftKey) console.log("REDO")
+      else console.log("UNDO")
     }
   }
   
@@ -71,10 +88,12 @@ export const EditableText = ({placeholder}: Props) => {
         ref={textElement}
         className="editable-text" 
         contentEditable={'plaintext-only' as ContentEditable} // Use plaintext (not supporting HTML) 
-        onKeyUp={(ev) => handelKeys(ev.code)}
-        dangerouslySetInnerHTML={{ __html: text }}
+        onKeyUp={(ev) => handelKeys(ev)}
+        onKeyDown={(ev) => handelKeys(ev)}
         onClick={() => handleClick()}
         onInput={(ev: React.SyntheticEvent<HTMLSpanElement, InputEvent>) => handleChange(ev)}
+        dangerouslySetInnerHTML={{ __html: text }}
+        suppressContentEditableWarning={true}
       >
       </span>
   )
