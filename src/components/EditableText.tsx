@@ -12,9 +12,6 @@ export const EditableText = ({placeholder}: Props) => {
   const [text, setText] = useState(placeholder || "This is editable text");
   const caretLocation = useRef(0);
   const textElement = useRef<HTMLSpanElement>(null);
-  const historyStack = useRef<string[]>([]);
-  const historyIndex = useRef(0);
-  const changeCount = useRef(0);
 
   useEffect(() => {
     placeCaretAt(caretLocation.current);
@@ -42,10 +39,9 @@ export const EditableText = ({placeholder}: Props) => {
     }
   }
 
-
   function handleChange(ev: React.SyntheticEvent<HTMLSpanElement, InputEvent>) {
     ev.preventDefault();
-    changeCount.current += 1;
+
     const el = textElement.current;
     if (!el) {
       console.error("Error: No element")
